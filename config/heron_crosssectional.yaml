@@ -1,0 +1,68 @@
+# HERON cross-sectional return prediction configuration
+# Mirrors PELICAN's 45k-parameter configuration, adapted for equity universes.
+#
+# Architecture: 5 × Eq2to2 blocks + Eq2to1 output head
+# Parameters: ~85k (vs PELICAN's 45k, due to wider per-asset feature space)
+# Task: predict cross-sectional rank returns, construct long-short portfolio
+
+# Data
+datadir: data/sample_data
+nobj: null            # null = use full universe
+nobj-avg: 200         # set to median training universe size
+target: targets
+RAMdataset: true
+shuffle: true
+seed: 42
+
+# Output
+output-head: crosssectional   # Eq2to1 head: per-asset alpha scores
+
+# Model architecture
+feature-dim: 7                # (ret_5d, ret_21d, ret_63d, ret_252d, vol_21d, vol_63d, turnover)
+num-bilinear: 4               # learned bilinear pairwise interaction channels
+num-channels-scalar: 16       # Eq1to2 output channels (per-asset → pairwise promotion)
+num-channels-m: "[[35],[35],[35],[35],[35]]"    # MessageNet channels per Eq2to2 block
+num-channels-2to2: "[60,60,60,60,60]"           # Eq2to2 channels (5 blocks)
+num-channels-out: "[64,32]"                     # output MLP hidden dims
+num-channels-m-out: "[60]"                      # final MessageNet channels
+num-market-features: 0        # set to 1 to enable market-context particle
+
+# Equivariant layer settings
+activation: leakyrelu
+config: "S"        # S = scaled sum aggregation with learnable (N/N̄)^α exponents
+config-out: "S"
+factorize: false
+
+# Regularisation
+dropout: false
+drop-rate: 0.1
+drop-rate-out: 0.1
+batchnorm: null    # null | b (BatchNorm) | i (InstanceNorm)
+
+# Optimiser
+optim: adamw
+lr-init: 0.001
+lr-final: 0.00001
+lr-decay: -1
+lr-decay-type: cos
+lr-minibatch: true
+warmup: 4
+cooldown: 5
+weight-decay: 0.0001
+num-epoch: 50
+batch-size: 32
+
+# Logging / saving
+prefix: heron_cs
+workdir: ./
+logdir: log/
+modeldir: model/
+predictdir: predict/
+save: true
+load: false
+test: true
+log-level: info
+verbose: false
+log-every: 20
+summarize: false
+summarize-csv: test
