@@ -46,6 +46,8 @@ def main():
         for yaml_file in args.yaml:
             with open(yaml_file) as f:
                 yaml_args.update(yaml.safe_load(f))
+        # argparse dests use underscores; YAML keys may use hyphens
+        yaml_args = {k.replace('-', '_'): v for k, v in yaml_args.items()}
         # Apply YAML defaults, then re-parse to let CLI override
         parser.set_defaults(**yaml_args)
         args = parser.parse_args()

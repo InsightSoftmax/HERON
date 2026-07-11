@@ -8,3 +8,4 @@ scikit-learn>=1.2
 colorlog>=6.0
 tensorboard>=2.13
 optuna>=3.0
+pytest>=7.0

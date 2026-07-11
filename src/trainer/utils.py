@@ -89,7 +89,7 @@ def load_checkpoint(model, optimizer, args):
         logger.warning(f'No checkpoint found at {loadfile}')
         return 0, -float('inf')
 
-    state = torch.load(loadfile, map_location=args.device)
+    state = torch.load(loadfile, map_location=args.device, weights_only=False)
     model.load_state_dict(state['model_state'])
     if optimizer is not None and 'optimizer_state' in state:
         optimizer.load_state_dict(state['optimizer_state'])
