@@ -170,6 +170,32 @@ def compute_all_metrics(predictions, targets, mask=None, prefix=''):
     return metrics
 
 
+def compute_portfolio_metrics(predictions, targets, mask=None, prefix=''):
+    """
+    Evaluation metrics for the 'portfolio' output head. NOT YET IMPLEMENTED.
+
+    predictions here is [B, 2] ("long/short weight logits"), not the [B, N]
+    per-asset shape that information_coefficient/portfolio_sharpe expect.
+    Blocked on the same product decision as
+    src/trainer/trainer.py::portfolio_loss - once the semantics of the 2
+    output values are decided, implement the matching Sharpe/drawdown
+    computation here and wire it into METRICS_FUNCTIONS below.
+    """
+    raise NotImplementedError(
+        "No evaluation metrics defined for output_head='portfolio' yet - "
+        "the semantics of the [B, 2] output haven't been decided. "
+        "See src/models/metrics.py::compute_portfolio_metrics."
+    )
+
+
+# Metrics function per output_head - mirrors LOSS_FUNCTIONS in
+# src/trainer/trainer.py, and is missing for the same reason.
+METRICS_FUNCTIONS = {
+    'crosssectional': compute_all_metrics,
+    'portfolio': compute_portfolio_metrics,
+}
+
+
 # --- Helpers ---
 
 def _rank(x):

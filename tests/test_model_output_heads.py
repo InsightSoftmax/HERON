@@ -9,7 +9,7 @@ import pytest
 import torch
 
 from src.models.heron import HERON
-from src.trainer.trainer import sharpe_loss
+from src.trainer.trainer import portfolio_loss
 
 from conftest import TINY_MODEL_KWARGS
 
@@ -94,11 +94,13 @@ def test_portfolio_head_is_permutation_invariant():
 def test_portfolio_head_has_no_working_loss():
     """Known gap: sharpe_loss hard-assumes [B, N] per-asset predictions.
 
-    The portfolio head returns [B, 2], so training with
-    --output-head=portfolio currently crashes. This test pins that
-    behaviour down; if someone adds a portfolio-compatible loss, this
-    test (and the note in project memory) needs to be updated together
-    with the trainer wiring.
+    The portfolio head returns [B, 2], not the [B, N] per-asset shape that
+    sharpe_loss expects, and nobody has decided what those 2 values should
+    represent yet. src/trainer/trainer.py::portfolio_loss is an explicit
+    stub for this - it raises NotImplementedError rather than crashing on
+    a shape mismatch. This test pins that down; if someone implements a
+    real portfolio loss, this test (and the note in project memory) needs
+    to be updated together with the trainer wiring.
     """
     model = HERON(output_head='portfolio', **TINY_MODEL_KWARGS)
     model.eval()
@@ -107,6 +109,6 @@ def test_portfolio_head_has_no_working_loss():
     with torch.no_grad():
         predictions = model(data)['predict']  # [B, 2]
 
-    targets = torch.randn(B, N)  # per-asset targets, mismatched with [B, 2]
-    with pytest.raises(RuntimeError):
-        sharpe_loss(predictions, targets, mask=data['particle_mask'])
+    targets = torch.randn(B, N)  # per-asset targets; shape is irrelevant, stub always raises
+    with pytest.raises(NotImplementedError):
+        portfolio_loss(predictions, targets, mask=data['particle_mask'])

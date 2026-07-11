@@ -19,7 +19,7 @@ import csv
 from datetime import datetime
 
 from .utils import save_checkpoint
-from ..models.metrics import compute_all_metrics, portfolio_sharpe, information_coefficient
+from ..models.metrics import METRICS_FUNCTIONS, portfolio_sharpe, information_coefficient
 
 logger = logging.getLogger(__name__)
 
@@ -75,6 +75,24 @@ def sharpe_loss(predictions, targets, mask=None, annualise=True, rebalance_freq=
     return -sharpe  # minimise negative Sharpe
 
 
+def portfolio_loss(predictions, targets, mask=None):
+    """
+    Loss for the 'portfolio' output head. NOT YET IMPLEMENTED.
+
+    predictions here is [B, 2] ("long/short weight logits" per HERON.forward),
+    not [B, N] like sharpe_loss/ic_loss expect. Before this can be written we
+    need a product decision on what those 2 values represent - e.g. a
+    long-book / short-book weight split, or a net-exposure + leverage pair.
+    Once that's decided, implement the matching differentiable objective here
+    and wire it into LOSS_FUNCTIONS below.
+    """
+    raise NotImplementedError(
+        "No loss function defined for output_head='portfolio' yet - "
+        "the semantics of the [B, 2] output haven't been decided. "
+        "See src/trainer/trainer.py::portfolio_loss."
+    )
+
+
 def ic_loss(predictions, targets, mask=None):
     """
     Differentiable IC loss: negative Pearson correlation between
@@ -91,6 +109,15 @@ def ic_loss(predictions, targets, mask=None):
         pred_demeaned.norm(dim=-1) * tgt_demeaned.norm(dim=-1) + 1e-8
     )
     return -ic.mean()  # minimise negative IC
+
+
+# Loss function per output_head. crosssectional's shape ([B, N], per-asset)
+# and portfolio's shape ([B, 2], per-batch-item) need different objectives -
+# see portfolio_loss above for what's still missing.
+LOSS_FUNCTIONS = {
+    'crosssectional': sharpe_loss,
+    'portfolio': portfolio_loss,
+}
 
 
 class Trainer:
@@ -121,8 +148,8 @@ class Trainer:
         self.best_valid_sharpe = -float('inf')
         self.start_epoch = 0
 
-        # Choose loss function
-        self.loss_fn = sharpe_loss
+        # Choose loss function to match the model's output head
+        self.loss_fn = LOSS_FUNCTIONS[args.output_head]
 
         self.csv_log = {}
 
@@ -182,7 +209,8 @@ class Trainer:
         all_targets = torch.cat(all_targets, dim=0)
         all_masks = torch.cat(all_masks, dim=0)
 
-        metrics = compute_all_metrics(all_preds, all_targets, all_masks, prefix=f'{split}_')
+        metrics_fn = METRICS_FUNCTIONS[self.args.output_head]
+        metrics = metrics_fn(all_preds, all_targets, all_masks, prefix=f'{split}_')
         if epoch is not None:
             metrics['epoch'] = epoch
         return metrics
