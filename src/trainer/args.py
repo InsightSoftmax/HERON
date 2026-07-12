@@ -1,8 +1,5 @@
 """
 args.py — HERON argument parser
-
-Adapted from PELICAN's args.py. Physics-specific arguments removed;
-finance-specific arguments added.
 """
 
 import argparse

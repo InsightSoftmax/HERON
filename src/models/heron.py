@@ -3,27 +3,17 @@ heron.py — HERON model
 
 Hierarchical Equivariant Return Optimization Network
 
-Adapted from pelican_classifier.py in the original PELICAN codebase.
-
 Architecture overview
 ---------------------
-PELICAN input pipeline:
-    4-momenta → GInvariants (Lorentz dot products) → InputEncoder → Net2to2 → Eq2to0 → MLP
-
-HERON input pipeline:
+Input pipeline:
     asset features + correlations → FinancialPairwiseFeatures → FinancialInputEncoder
                                   → Net2to2 → Eq2to1/Eq2to0 → per-asset MLP / portfolio head
-
-The equivariant core (Net2to2, Eq2to2, Eq2to1, Eq2to0) is mathematically identical
-to PELICAN. Only the input stage changes: Lorentz invariants are replaced by
-financial pairwise signals.
 
 Two output heads:
   - Eq2to1 head: per-asset alpha scores → cross-sectional return prediction
   - Eq2to0 head: portfolio-level prediction → regime classification or portfolio weights
 
-Market context ("market particles"):
-  Analogous to PELICAN's beam particles (which restored the lab-frame orientation),
+Market context:
   HERON can prepend a small number of "market assets" to the asset list. These encode
   index-level signals (market return, VIX, yield curve slope) and interact with all
   real assets through the equivariant layers without contaminating the permutation
@@ -69,7 +59,7 @@ class HERON(nn.Module):
         'crosssectional' (Eq2to1 → per-asset scores) or
         'portfolio'      (Eq2to0 → portfolio weights).
     num_market_features : int
-        Number of "market particle" slots prepended to the asset list (0 to disable).
+        Number of market context slots prepended to the asset list (0 to disable).
     average_nobj : int
         Typical universe size N̄. Used in the (N/N̄)^α learnable scaling.
         Setting this correctly is important for generalisation across universe sizes.
@@ -114,7 +104,7 @@ class HERON(nn.Module):
     ):
         super().__init__()
 
-        # Defaults matching the PELICAN paper's best configuration
+        # Defaults matching HERON's best-performing configuration
         if num_channels_m is None:
             num_channels_m = [[35]] * 5
         if num_channels_2to2 is None:
@@ -166,7 +156,6 @@ class HERON(nn.Module):
         )
 
         # Step 3: Promote per-asset features to pairwise via Eq1to2
-        # (analogous to PELICAN's handling of particle scalars like beam flags / PIDs)
         total_per_asset_dim = feature_dim + num_market_features
         self.eq1to2 = Eq1to2(
             total_per_asset_dim, num_channels_scalar,
@@ -178,8 +167,6 @@ class HERON(nn.Module):
 
         # --- Equivariant core ---
         # Net2to2: stack of 5 Eq2to2 blocks (message + aggregation)
-        # This is identical to PELICAN — the physics/finance boundary is entirely
-        # in the input stage above; from here on, the math is the same.
         self.net2to2 = Net2to2(
             num_channels_2to2 + [num_channels_m_out[0]],
             num_channels_m,
@@ -261,7 +248,7 @@ class HERON(nn.Module):
         """
         asset_features, correlations, particle_mask, edge_mask, nobj = self.prepare_input(data)
 
-        # Add market context features if provided (analogous to beam particles)
+        # Add market context features if provided
         if self.num_market_features > 0 and 'market_features' in data:
             asset_features, particle_mask, edge_mask, nobj = self._prepend_market_particles(
                 asset_features, data['market_features'], particle_mask, edge_mask, nobj
@@ -327,13 +314,13 @@ class HERON(nn.Module):
 
     def _prepend_market_particles(self, asset_features, market_features, particle_mask, edge_mask, nobj):
         """
-        Prepend market context "particles" to the asset list.
+        Prepend market context slots to the asset list.
 
-        Analogous to PELICAN's beam particles, these provide information about
-        the ambient market environment that is invisible to a purely cross-sectional
-        model. E.g. the market return, VIX level, yield curve slope.
+        These provide information about the ambient market environment that
+        is invisible to a purely cross-sectional model, e.g. the market
+        return, VIX level, or yield curve slope.
 
-        The market particle slots are flagged so the Eq2to1 output head can
+        The market context slots are flagged so the Eq2to1 output head can
         exclude them from the per-asset prediction vector.
         """
         B, N, d_f = asset_features.shape

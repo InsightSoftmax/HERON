@@ -2,7 +2,7 @@
 src/trainer/scheduler.py::get_scheduler.
 
 These functions didn't exist at all until this test suite was added -
-train_heron.py imported them but only leftover PELICAN optimizer/scheduler
+train_heron.py imported them but only unused optimizer/scheduler
 *classes* were present, so any training run crashed on import.
 """
 import types

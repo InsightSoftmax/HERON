@@ -1,12 +1,11 @@
 # Based on https://github.com/horacepan/permeqlayers/blob/main/equivariant_layers.py
 # Adapted for HERON (Hierarchical Equivariant Return Optimization Network)
 #
-# These are the core permutation-equivariant operations.
-# In the original PELICAN, these operated on pairwise Lorentz dot products between jet constituents.
-# In HERON, they operate on pairwise financial signals between assets (correlations, factor
-# cross-exposures, bilinear feature interactions). The mathematical structure is identical —
-# only the inputs have changed. All 15 basis elements of Eq₂→₂ are available (vs. a
-# Lorentz-constrained subset in PELICAN), giving HERON strictly more architectural flexibility.
+# These are the core permutation-equivariant operations. They operate on pairwise
+# financial signals between assets — correlations, factor cross-exposures, and
+# learned bilinear feature interactions. All 15 basis elements of Eq₂→₂ are
+# available, since no symmetry constraint beyond permutation applies to this
+# input space, giving HERON substantial architectural flexibility.
 
 import torch
 import torch.nn as nn
@@ -209,9 +208,9 @@ def eops_2_to_2(inputs, nobj=None, nobj_avg=100, aggregation='mean', weight=None
       - 5 "skip" ops: identity, transpose, diagonal embed, and row/col broadcast of diagonal
       - 10 "mixing" ops: row/col sums broadcast as rows, cols, diagonals, and global sum
 
-    In PELICAN (physics), only a Lorentz-compatible subset of these 15 was used.
-    In HERON (finance), all 15 are available because no Lorentz constraint applies —
-    giving the model strictly more expressive power for the same parameter budget.
+    HERON uses the full 15-element basis, since no symmetry constraint beyond
+    permutation applies to this input space — giving the model substantial
+    expressive power for its parameter budget.
 
     The learnable (N/N̄)^α scaling exponent is critical for finance: it lets the model
     trained on 300-stock universes deploy cleanly on 500-stock universes without retraining.

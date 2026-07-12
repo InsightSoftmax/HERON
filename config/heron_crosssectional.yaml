@@ -1,8 +1,7 @@
 # HERON cross-sectional return prediction configuration
-# Mirrors PELICAN's 45k-parameter configuration, adapted for equity universes.
 #
 # Architecture: 5 × Eq2to2 blocks + Eq2to1 output head
-# Parameters: ~85k (vs PELICAN's 45k, due to wider per-asset feature space)
+# Parameters: ~85k
 # Task: predict cross-sectional rank returns, construct long-short portfolio
 
 # Data

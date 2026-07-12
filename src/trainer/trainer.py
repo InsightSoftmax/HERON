@@ -1,13 +1,9 @@
 """
 trainer.py — HERON training loop
 
-Adapted from PELICAN's trainer/trainer.py.
-
-Key differences from PELICAN:
-  - Loss function: Sharpe objective (maximise risk-adjusted return) or IC loss
-    instead of cross-entropy on jet classification
-  - Metrics: IC, Sharpe, max drawdown instead of AUC, accuracy
-  - Target: per-asset forward returns instead of jet class labels
+Trains on a differentiable Sharpe objective (maximise risk-adjusted return)
+or IC loss, and evaluates with IC, Sharpe, and max drawdown against per-asset
+forward returns.
 """
 
 import torch

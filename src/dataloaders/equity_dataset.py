@@ -1,11 +1,8 @@
 """
 equity_dataset.py — HERON dataset loader
 
-Replaces jetdatasets.py from PELICAN.
-
-In PELICAN, each event was a jet: a set of up to ~200 particles with 4-momenta.
-In HERON, each event is a cross-section: a set of N assets on a given date,
-each described by a feature vector (returns, volatility, etc.) plus a pairwise
+Each event is a cross-section: a set of N assets on a given date, each
+described by a feature vector (returns, volatility, etc.) plus a pairwise
 correlation matrix and a forward return target.
 
 Data format (HDF5):
@@ -17,11 +14,10 @@ Data format (HDF5):
 
 Optional:
   'market_features' : [d_m]        market-context features (VIX, index return, etc.)
-                                   analogous to PELICAN's beam particles
 
 The dataset supports:
   - Walk-forward splits (train/valid/test by date range)
-  - Variable universe sizes (handled via masking, like PELICAN's particle masking)
+  - Variable universe sizes (handled via masking)
   - In-RAM or streaming modes for large datasets
 """
 
@@ -41,10 +37,6 @@ class EquityDataset(Dataset):
 
     Each item is one cross-section (one rebalancing date): a set of N assets
     described by feature vectors, pairwise correlations, and return targets.
-
-    This is the financial analogue of PELICAN's JetDataset. Where JetDataset
-    loaded particle 4-momenta, EquityDataset loads asset feature vectors and
-    pairwise correlation matrices.
 
     Parameters
     ----------
@@ -126,7 +118,7 @@ def create_equity_datasets(datadir, args):
 
     Walk-forward splits are specified either by explicit date ranges in
     args.train_dates / args.valid_dates / args.test_dates, or by reading
-    train.h5 / valid.h5 / test.h5 files in datadir (matching PELICAN's layout).
+    train.h5 / valid.h5 / test.h5 files in datadir.
     """
     import os
 

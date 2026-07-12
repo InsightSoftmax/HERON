@@ -1,12 +1,8 @@
 """
 metrics.py — HERON financial evaluation metrics
 
-Replaces metrics_classifier.py / metrics_cov.py from PELICAN.
-
-PELICAN metrics: accuracy, AUC, background rejection (jet physics classification).
-HERON metrics: Information Coefficient (IC), Sharpe ratio, max drawdown, hit rate.
-
-These are the standard metrics used in systematic/quantitative equity strategies.
+Information Coefficient (IC), Sharpe ratio, max drawdown, hit rate — the
+standard metrics used in systematic/quantitative equity strategies.
 """
 
 import torch

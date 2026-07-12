@@ -1,7 +1,5 @@
 """
 utils.py — HERON training utilities
-
-Adapted from PELICAN's trainer/utils.py.
 """
 
 import torch

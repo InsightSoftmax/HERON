@@ -1,11 +1,10 @@
 """
 collate.py — HERON batch collation
 
-Adapted from PELICAN's collate.py.
-
-Key change: PELICAN masked based on 4-momentum energy (E != 0 means real particle).
-HERON masks based on nobj or a dedicated mask field — zero-padded asset slots
-are excluded from all aggregation operations.
+Pads variable-size cross-sections to a common universe size within a batch,
+and builds the masks that tell the equivariant layers which asset slots are
+real vs. padding. Masking is based on nobj or a dedicated mask field —
+zero-padded asset slots are excluded from all aggregation operations.
 
 The mask mechanism is essential for variable universe sizes: if a training batch
 contains cross-sections of sizes [300, 287, 315], all are padded to 315, and the

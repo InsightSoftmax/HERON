@@ -1,12 +1,7 @@
 """
 financial_features.py — HERON input feature computation
 
-Replaces lorentz_metric.py from PELICAN.
-
-In PELICAN, the fundamental pairwise inputs were Lorentz-invariant dot products:
-    d_ij = p_i · p_j = E_i E_j − p⃗_i · p⃗_j   (Minkowski metric)
-
-In HERON, the fundamental pairwise inputs are financial pairwise signals:
+The fundamental pairwise inputs to HERON are financial pairwise signals:
     A_ij = f(feature_i, feature_j)
 
 where A_ij can be:
@@ -15,13 +10,13 @@ where A_ij can be:
   - Co-skewness estimates
   - Factor cross-exposures: β_i^T Σ_F β_j
 
-The symmetry group changes from SO⁺(1,3) (Lorentz) to Sₙ (permutations only),
-which means all 15 Eq₂→₂ basis elements are admissible — strictly more expressive
-than the Lorentz-constrained subset used in PELICAN.
+The only symmetry constraint on this input space is permutation invariance
+(the symmetric group Sₙ), so all 15 Eq₂→₂ basis elements are admissible,
+giving the model substantial expressive power.
 
-The learnable input encoding f_β(x) = ((1+x)^β² − 1)/β² from PELICAN is retained:
-correlations have a similar "peaked near zero, fat-tailed" distribution to Lorentz
-dot products, and the power-law encoding handles this effectively.
+A learnable power-law encoding f_β(x) = ((1+x)^β² − 1)/β² is applied to these
+pairwise signals: financial correlations have a "peaked near zero, fat-tailed"
+distribution, and this encoding handles that shape effectively.
 """
 
 import torch
@@ -33,8 +28,7 @@ class FinancialPairwiseFeatures(nn.Module):
     """
     Computes the N×N pairwise feature tensor from per-asset feature vectors.
 
-    This is the financial analogue of GInvariants in PELICAN. Where PELICAN computed
-    all pairwise Lorentz dot products d_ij = p_i · p_j, HERON computes:
+    HERON computes:
 
       1. Pre-computed correlations loaded directly from data (ρ_ij)
       2. Learned bilinear interactions f_i^T W^k f_j (num_bilinear of these)
@@ -88,7 +82,7 @@ class FinancialPairwiseFeatures(nn.Module):
         Returns
         -------
         rank2_inputs : Tensor [B, N, N, rank2_dim]
-            Pairwise feature tensor — the direct analogue of PELICAN's dot product matrix.
+            Pairwise feature tensor.
         """
         channels = []
 
@@ -111,14 +105,12 @@ class FinancialPairwiseFeatures(nn.Module):
 
 class FinancialInputEncoder(nn.Module):
     """
-    Learnable encoding of raw financial pairwise signals.
-
-    Directly analogous to PELICAN's InputEncoder. PELICAN used:
+    Learnable encoding of raw financial pairwise signals:
         f_β(x) = ((1 + x)^β² − 1) / β²
 
-    on Lorentz dot products, which have a steeply-decaying distribution.
-    Financial correlations and bilinear signals have a similar heavy-tailed,
-    non-Gaussian distribution, and this encoding handles it effectively.
+    Financial correlations and bilinear signals have a heavy-tailed,
+    non-Gaussian distribution, and this power-law encoding handles it
+    effectively.
 
     For correlations ρ ∈ [−1, 1], we use the signed variant:
         g_β(ρ) = ((1 + |ρ|)^β² − 1) / β² × sign(ρ)
@@ -139,7 +131,7 @@ class FinancialInputEncoder(nn.Module):
         self.rank2_in_dim = rank2_in_dim
         self.out_dim = out_dim
 
-        # Multiple β values: initialised to span [0.1, 0.5], matching PELICAN's initialisation
+        # Multiple β values, initialised to span [0.1, 0.5]
         self.rank2_alphas = nn.Parameter(
             torch.linspace(0.05, 0.5, out_dim, device=device, dtype=dtype)
         )
