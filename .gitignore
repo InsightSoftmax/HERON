@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.venv/
+~$*
+/model/
+/log/
+/predict/
+*.h5
