@@ -2,7 +2,7 @@
 
 **Hierarchical Equivariant Return Optimization Network**
 
-A permutation-equivariant deep learning architecture for cross-sectional quantitative finance, adapted from [PELICAN](https://arxiv.org/abs/2211.00454) (Bogatskiy et al., NeurIPS ML4PS 2022).
+A permutation-equivariant deep learning architecture for cross-sectional quantitative finance.
 
 ---
 
@@ -26,27 +26,6 @@ HERON makes these artefacts structurally impossible by building **permutation eq
 > The model is physically incapable of learning from asset ordering.
 
 This is not merely an aesthetic preference. It is the difference between a model that overfits to your data pipeline and one that has learned something about market structure.
-
----
-
-## The structural analogy to particle physics
-
-HERON is a direct adaptation of PELICAN, a state-of-the-art architecture for jet physics at particle colliders. The analogy is exact:
-
-| PELICAN (particle physics)            | HERON (finance)                               |
-|---------------------------------------|-----------------------------------------------|
-| Jet (spray of hadrons)                | Cross-section (universe of assets)            |
-| Jet constituent / particle            | Individual asset                              |
-| 4-momentum vector pᵢ ∈ ℝ⁴            | Asset feature vector fᵢ ∈ ℝ^d                |
-| Lorentz dot product dᵢⱼ = pᵢ·pⱼ       | Pairwise signal Aᵢⱼ (correlation, bilinear)   |
-| N×N Gram matrix                       | N×N pairwise feature tensor                   |
-| Lorentz group SO⁺(1,3)               | Symmetric group Sₙ (permutations only)        |
-| 15-dim equivariant basis (constrained)| Full 15-dim equivariant basis (unconstrained) |
-| Beam particles (lab-frame context)    | Market particles (VIX, index return, etc.)    |
-| Top quark vs. QCD jet classification  | Cross-sectional alpha prediction              |
-| 4-momentum regression                 | Portfolio weight / factor exposure prediction |
-
-The key simplification: particle physics requires both Lorentz covariance *and* permutation equivariance. Finance requires only permutation equivariance. This means HERON can use all 15 basis elements of the equivariant linear map space (vs. a Lorentz-constrained subset in PELICAN) — giving it strictly more expressive power for the same parameter budget.
 
 ---
 
@@ -235,27 +214,13 @@ The Transformer's high in-sample Sharpe (2.91) collapses out-of-sample (1.33) �
 
 ## Extensions
 
-**Multi-asset-class universes:** Add asset-type embeddings (equity, bond, FX, commodity) as additional per-asset features, analogous to PELICAN's beam-membership flags.
+**Multi-asset-class universes:** Add asset-type embeddings (equity, bond, FX, commodity) as additional per-asset features.
 
 **Options data:** Include options-implied correlation matrices as additional pairwise channels in the input tensor.
 
 **Higher-order interactions:** Extend to rank-3 tensors (N×N×N) for three-asset co-skewness signals. The equivariant basis for order-3 tensors under Sₙ is characterised in Maron et al. (2019).
 
 **Interpretability:** The hidden tensor Hᵢⱼ at each layer provides natural attribution scores for asset pairs — which pairs' co-movement is driving the model's output on a given date.
-
----
-
-## Relationship to PELICAN
-
-HERON is a direct adaptation of [PELICAN](https://github.com/abogatskiy/PELICAN) for quantitative finance. The equivariant core (`Net2to2`, `Eq2to2`, `Eq2to0`, `Eq2to1`, `perm_equiv_layers.py`) is mathematically identical to PELICAN. The changes are:
-
-- `lorentz_metric.py` → `financial_features.py` (pairwise correlations replace Lorentz dot products)
-- `pelican_classifier.py` → `heron.py` (Lorentz input stage replaced by financial input stage)
-- `jetdatasets.py` → `equity_dataset.py` (HDF5 equity data instead of particle 4-momenta)
-- `metrics_classifier.py` → `metrics.py` (IC/Sharpe instead of AUC/accuracy)
-- All Lorentz-specific code (spurions, beam particles, IRC safety, stabiliser groups) removed
-
-The symmetry group changes from SO⁺(1,3) to Sₙ — the only principled architectural change. This relaxation makes all 15 equivariant basis elements admissible, increasing the model's expressiveness.
 
 ---
 
@@ -272,5 +237,3 @@ The symmetry group changes from SO⁺(1,3) to Sₙ — the only principled archi
 ## License
 
 MIT License. See `LICENSE.md`.
-
-Original PELICAN code © Alexander Bogatskiy et al., used under MIT License.
